@@ -3,6 +3,13 @@
 
 A library for setting up 7 segments as a multiplexer for all types of microcontrollers. This library is under development and currently works only on AVR microcontrollers.
 
+ - [x] putInt
+ - [ ] putString
+ - [ ] putFloat
+ - [x] Common Anode and Common Cathode support
+ - [ ] multi instance support
+ - [x] auto refresh support
+
 ## How to use
 
  - First, add the library to your project

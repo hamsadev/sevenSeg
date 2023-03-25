@@ -9,11 +9,13 @@ A library for setting up 7 segments as a multiplexer for all types of microcontr
  - [x] Common Anode and Common Cathode support
  - [ ] multi instance support
  - [x] auto refresh support
+ - [x] timers auto config
 
 ## How to use
 
  - First, add the library to your project
- - enter the seven_seg.h file and set SEVEN_SEG_TIMER and SEVEN_SEG_IS_CA
+ - Define F_CPU, otherwise the default value will be set (8MHz)
+ - Enter the seven_seg.h file and set SEVEN_SEG_TIMER and SEVEN_SEG_IS_CA
  
  ```
  /*

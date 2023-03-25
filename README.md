@@ -5,7 +5,7 @@ A library for setting up 7 segments as a multiplexer for all types of microcontr
 
  - [x] putInt
  - [x] putString
- - [ ] putFloat
+ - [x] putFloat
  - [x] Common Anode and Common Cathode support
  - [ ] multi instance support
  - [x] auto refresh support

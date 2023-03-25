@@ -23,9 +23,15 @@ typedef struct {
 #define SEVEN_SEG_TIMER         0         
 #define SEVEN_SEG_IS_CA         0       
 
+#pragma used+    
+
 void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum);
 void sevenSegPutInt(uint32_t num);
+void sevenSegPuts(char* str);
 #if SEVEN_SEG_TIMER == -1 
 void sevenSegRefreshIsr(void);
 #endif
+
+#pragma used-
+
 #endif // SEVEN_SEG_H_

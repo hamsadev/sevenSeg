@@ -4,7 +4,7 @@
 A library for setting up 7 segments as a multiplexer for all types of microcontrollers. This library is under development and currently works only on AVR microcontrollers.
 
  - [x] putInt
- - [ ] putString
+ - [x] putString
  - [ ] putFloat
  - [x] Common Anode and Common Cathode support
  - [ ] multi instance support

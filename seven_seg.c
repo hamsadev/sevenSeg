@@ -6,30 +6,15 @@
  */
 
 #include <io.h>
-#include <mega16.h>
 #include <stdint.h>
-#include <delay.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include "io_define.h"
 #include "seven_seg.h"
+#include "seven_seg_ascii.h"
 
 static SevenSegPin* gDataBus;
 static SevenSegPin* gComBus;
 static uint8_t gDigitsNum;
 static uint8_t* sevenSegDigit;
-#if SEVEN_SEG_IS_CA != 0 
-static const uint8_t sevenSegNum[10] = 
-{
-    0xC0, 0xF9, 0xA4, 0xB0, 0x99,0x92, 0x82, 0xF8, 0x80, 0x90
-};
-#else                                    
-static const uint8_t sevenSegNum[10] = 
-{
-    0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x4F
-};
-#endif // SEVEN_SEG_IS_CA != 0  
-
 
 void _resetComBus (void)
 {
@@ -103,11 +88,21 @@ void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
 void sevenSegPutInt(uint32_t num)
 {
     uint8_t i;
-    
-    for (i = 0; i < gDigitsNum; i++)
+    for(i = 0; i < gDigitsNum; i++)
     {                      
         sevenSegDigit[i] = sevenSegNum[num % 10];
         num /= 10;
+    }
+}
+
+void sevenSegPuts(char* str)
+{
+    uint8_t i;
+    for(i = 0; i < gDigitsNum; i++)
+    {             
+        sevenSegDigit[gDigitsNum - i - 1] = (*str != '\0') ? 
+            SevenSegmentASCII[*str++ - 0x20] :
+            SevenSegmentASCII[0];
     }
 }
 

@@ -17,6 +17,10 @@ static SevenSegPin* gComBus;
 static uint8_t gDigitsNum;
 static uint8_t* sevenSegDigit;
 
+#ifndef F_CPU
+#define F_CPU 8000000UL
+#endif //F_CPU
+
 void _resetComBus (void)
 {
     uint8_t i;
@@ -40,6 +44,58 @@ uint32_t _intPow(uint32_t x, uint32_t y)
     return ret;         
 }
 
+void _setup_timer(uint8_t timer, uint16_t interval) {
+  uint16_t prescaler;
+  uint16_t timer_value;
+
+  // set the prescaler based on the desired interval
+  if (interval < 256) 
+  {
+    prescaler = 1;
+  } 
+  else if (interval < 2048) 
+  {
+    prescaler = 8;
+  } 
+  else if (interval < 16384) 
+  {
+    prescaler = 64;
+  } 
+  else if (interval <= 65535) 
+  {
+    prescaler = 256;
+  } 
+  else 
+  {
+    prescaler = 1024;
+  }
+
+  // calculate the timer value based on the prescaler and desired interval
+  timer_value = ((F_CPU / prescaler) * interval) / 1000UL - 1;
+
+  // set the prescaler and timer value for the selected timer
+  switch (timer) 
+  {
+    case 0:
+      TCCR0 |= (1 << CS00) | (1 << CS01); // set prescaler to 64
+      OCR0 = timer_value; // set output compare register value
+      TIMSK |= (1 << OCIE0); // enable timer compare interrupt
+      break;
+    case 1:
+      TCCR1B |= (1 << CS10) | (1 << CS11); // set prescaler to 64
+      OCR1A = timer_value; // set output compare register value
+      TIMSK |= (1 << OCIE1A); // enable timer compare interrupt
+      break;
+    case 2:
+      TCCR2 |= (1 << CS20) | (1 << CS21); // set prescaler to 64
+      OCR2 = timer_value; // set output compare register value
+      TIMSK |= (1 << OCIE2); // enable timer compare interrupt
+      break;
+    default:
+      break;
+  }
+}
+
 void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
 {       
     uint8_t i;              
@@ -47,27 +103,11 @@ void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
     sevenSegDigit = (uint8_t*)malloc(digitsNum);      
     
     #if SEVEN_SEG_TIMER == 0   
-    TCCR0 = (1 << CS01) | (1 << CS00);
-    TCNT0 = 0x83;                    
-    OCR0 = 0x00;
-    TIMSK |= (1 << TOIE0); 
+    _setup_timer(0, 1);
     #elif SEVEN_SEG_TIMER == 1 
-    TCCR1A = 0;
-    TCCR1B = (1 << CS10);
-    TCNT1H = 0xE0;
-    TCNT1L = 0xC0;
-    ICR1H = 0x00;
-    ICR1L = 0x00;
-    OCR1AH = 0x00;
-    OCR1AL =0x00;
-    OCR1BH = 0x00;
-    OCR1BL = 0x00;
-    TIMSK |= (1 << TOIE1); 
+    _setup_timer(1, 1);
     #elif SEVEN_SEG_TIMER == 2  
-    ASSR= 0 << AS2;
-    TCCR2 = (1 << CS21) | (1 << CS20);
-    TCNT2 = 0x06;
-    TIMSK = (1 << TOIE2); 
+    _setup_timer(2, 1);
     #endif   
     
     gDataBus = dataBus;
@@ -178,24 +218,20 @@ void sevenSegRefreshIsr(void)
 }
 
 #if SEVEN_SEG_TIMER == 0
-interrupt [TIM0_OVF] void timer0_ovf_isr(void)
+interrupt [TIM0_COMP] void timer0_ovf_isr(void)
 {
     sevenSegRefreshIsr();
-    TCNT0=0x83;
 }
 #elif SEVEN_SEG_TIMER == 1
-interrupt [TIM1_OVF] void timer1_ovf_isr(void)
+interrupt [TIM1_COMP] void timer1_ovf_isr(void)
 {    
     sevenSegRefreshIsr();
-    TCNT1H=0xE0C0 >> 8;
-    TCNT1L=0xE0C0 & 0xff;
     
 }
 #elif SEVEN_SEG_TIMER == 2
-interrupt [TIM2_OVF] void timer2_ovf_isr(void)
+interrupt [TIM2_COMP] void timer2_ovf_isr(void)
 {
     sevenSegRefreshIsr();
-    TCNT2=0x06;
 }
 #endif //SEVEN_SEG_TIMER  
 

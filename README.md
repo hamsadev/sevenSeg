@@ -11,6 +11,9 @@ A library for setting up 7 segments as a multiplexer for all types of microcontr
  - [x] auto refresh support
  - [x] timers auto config
 
+# Demo
+![](https://github.com/hamsaco/sevenSeg/header.gif)
+
 ## How to use
 
  - First, add the library to your project

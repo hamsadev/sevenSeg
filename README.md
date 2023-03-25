@@ -12,7 +12,7 @@ A library for setting up 7 segments as a multiplexer for all types of microcontr
  - [x] timers auto config
 
 # Demo
-![](https://github.com/hamsaco/sevenSeg/header.gif)
+![](https://github.com/hamsaco/sevenSeg/blob/master/header.gif)
 
 ## How to use
 

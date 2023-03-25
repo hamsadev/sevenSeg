@@ -21,13 +21,14 @@ typedef struct {
     MANUAL -> -1
 */ 
 #define SEVEN_SEG_TIMER         0         
-#define SEVEN_SEG_IS_CA         0       
+#define SEVEN_SEG_IS_CA         1   
 
 #pragma used+    
 
 void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum);
 void sevenSegPutInt(uint32_t num);
 void sevenSegPuts(char* str);
+void sevenSegPutFloat(float num, uint8_t decimals);
 #if SEVEN_SEG_TIMER == -1 
 void sevenSegRefreshIsr(void);
 #endif

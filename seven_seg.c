@@ -8,6 +8,7 @@
 #include <io.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 #include "seven_seg.h"
 #include "seven_seg_ascii.h"
 
@@ -27,6 +28,16 @@ void _resetComBus (void)
         gComBus[i].gpio->PORT.reg |= (1 << gComBus[i].pin);
         #endif // SEVEN_SEG_IS_CA != 0                        
     }
+}
+
+uint32_t _intPow(uint32_t x, uint32_t y)
+{   
+    uint32_t ret = 1;
+    while(y-- > 0)
+    {
+        ret *= x;        
+    }       
+    return ret;         
 }
 
 void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
@@ -87,6 +98,11 @@ void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
 
 void sevenSegPutInt(uint32_t num)
 {
+    /*char* temp = malloc(gDigitsNum + 1);
+    itoa(num, temp);
+    sevenSegPuts(temp);
+    free(temp);*/  
+
     uint8_t i;
     for(i = 0; i < gDigitsNum; i++)
     {                      
@@ -106,6 +122,29 @@ void sevenSegPuts(char* str)
     }
 }
 
+void sevenSegPutFloat(float num, uint8_t decimals)
+{
+    /*char* temp = malloc(gDigitsNum + 1);
+    ftoa(num, decimals, temp);
+    sevenSegPuts(temp);
+    free(temp);*/          
+           
+    // TODO: save integer when decimals is too large      
+    uint32_t temp = num * _intPow(10, decimals);
+    uint8_t i;       
+    for(i = 0; i < gDigitsNum; i++)
+    {                                       
+        sevenSegDigit[i] = sevenSegNum[temp % 10];
+        temp /= 10;   
+    }       
+              
+    // Set DP
+    #if SEVEN_SEG_IS_CA     
+    sevenSegDigit[decimals] &= ~0x80;     
+    #else                     
+    sevenSegDigit[decimals] |= 0x80;            
+    #endif //SEVEN_SEG_IS_CA          
+}
 
 void sevenSegRefreshIsr(void)                                      
 {

@@ -44,56 +44,28 @@ uint32_t _intPow(uint32_t x, uint32_t y)
     return ret;         
 }
 
-void _setup_timer(uint8_t timer, uint16_t interval) {
-  uint16_t prescaler;
+void _setup_timer(uint16_t interval) {
+  uint16_t prescaler = 64;
   uint16_t timer_value;
-
-  // set the prescaler based on the desired interval
-  if (interval < 256) 
-  {
-    prescaler = 1;
-  } 
-  else if (interval < 2048) 
-  {
-    prescaler = 8;
-  } 
-  else if (interval < 16384) 
-  {
-    prescaler = 64;
-  } 
-  else if (interval <= 65535) 
-  {
-    prescaler = 256;
-  } 
-  else 
-  {
-    prescaler = 1024;
-  }
 
   // calculate the timer value based on the prescaler and desired interval
   timer_value = ((F_CPU / prescaler) * interval) / 1000UL - 1;
 
   // set the prescaler and timer value for the selected timer
-  switch (timer) 
-  {
-    case 0:
+  #if SEVEN_SEG_TIMER == 0
       TCCR0 |= (1 << CS00) | (1 << CS01); // set prescaler to 64
       OCR0 = timer_value; // set output compare register value
       TIMSK |= (1 << OCIE0); // enable timer compare interrupt
-      break;
-    case 1:
+  #elif SEVEN_SEG_TIMER == 1
       TCCR1B |= (1 << CS10) | (1 << CS11); // set prescaler to 64
       OCR1A = timer_value; // set output compare register value
       TIMSK |= (1 << OCIE1A); // enable timer compare interrupt
-      break;
-    case 2:
+  #elif SEVEN_SEG_TIMER == 2      
       TCCR2 |= (1 << CS20) | (1 << CS21); // set prescaler to 64
       OCR2 = timer_value; // set output compare register value
       TIMSK |= (1 << OCIE2); // enable timer compare interrupt
-      break;
-    default:
-      break;
-  }
+  #endif // SEVEN_SEG_TIMER
+  
 }
 
 void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
@@ -101,14 +73,8 @@ void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
     uint8_t i;              
     gDigitsNum = digitsNum;
     sevenSegDigit = (uint8_t*)malloc(digitsNum);      
-    
-    #if SEVEN_SEG_TIMER == 0   
-    _setup_timer(0, 1);
-    #elif SEVEN_SEG_TIMER == 1 
-    _setup_timer(1, 1);
-    #elif SEVEN_SEG_TIMER == 2  
-    _setup_timer(2, 1);
-    #endif   
+       
+    _setup_timer(1);
     
     gDataBus = dataBus;
     gComBus  =  comBus;

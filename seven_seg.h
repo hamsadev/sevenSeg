@@ -20,7 +20,7 @@ typedef struct {
     TIMER2 -> 2
     MANUAL -> -1
 */ 
-#define SEVEN_SEG_TIMER         0         
+#define SEVEN_SEG_TIMER         2         
 #define SEVEN_SEG_IS_CA         1   
 
 #pragma used+    

@@ -5,105 +5,53 @@
  * 
  */
 
-#include <io.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <math.h>
 #include "seven_seg.h"
 #include "seven_seg_ascii.h"
 
-static SevenSegPin* gDataBus;
-static SevenSegPin* gComBus;
+static const SevenSeg_Driver* sevenSegDriver;
+
+static SevenSeg_pinConfig* gDataBus;
+static SevenSeg_pinConfig* gComBus;
 static uint8_t gDigitsNum;
 static uint8_t* sevenSegDigit;
 
-#ifndef F_CPU
-#define F_CPU 8000000UL
-#endif //F_CPU
+static void initDataBus (SevenSeg_pinConfig* dataBus);
+static void initComBus (SevenSeg_pinConfig* comBus, uint8_t len);
+static uint32_t intPow(uint32_t x, uint32_t y);
 
-void _resetComBus (void)
-{
-    uint8_t i;
-    for(i = 0; i < gDigitsNum; i++)
+void _resetComBus (void){
+    SevenSeg_pinConfig* comBus = gComBus;
+    uint8_t len = gDigitsNum;
+
+    while(len-- > 0)
     {          
-        #if SEVEN_SEG_IS_CA != 0 
-        gComBus[i].gpio->PORT.reg &= ~(1 << gComBus[i].pin);        
+        #if SEVEN_SEG_IS_CA
+        sevenSegDriver->writePin(comBus, GPIO_PIN_RESET);   
         #else                                    
-        gComBus[i].gpio->PORT.reg |= (1 << gComBus[i].pin);
-        #endif // SEVEN_SEG_IS_CA != 0                        
+        sevenSegDriver->writePin(comBus, GPIO_PIN_SET);
+        #endif // SEVEN_SEG_IS_CA     
+        comBus++;                
     }
 }
 
-uint32_t _intPow(uint32_t x, uint32_t y)
-{   
-    uint32_t ret = 1;
-    while(y-- > 0)
-    {
-        ret *= x;        
-    }       
-    return ret;         
-}
-
-void _setup_timer(uint16_t interval) {
-  uint16_t prescaler = 64;
-  uint16_t timer_value;
-
-  // calculate the timer value based on the prescaler and desired interval
-  timer_value = ((F_CPU / prescaler) * interval) / 1000UL - 1;
-
-  // set the prescaler and timer value for the selected timer
-  #if SEVEN_SEG_TIMER == 0
-      TCCR0 |= (1 << CS00) | (1 << CS01); // set prescaler to 64
-      OCR0 = timer_value; // set output compare register value
-      TIMSK |= (1 << OCIE0); // enable timer compare interrupt
-  #elif SEVEN_SEG_TIMER == 1
-      TCCR1B |= (1 << CS10) | (1 << CS11); // set prescaler to 64
-      OCR1A = timer_value; // set output compare register value
-      TIMSK |= (1 << OCIE1A); // enable timer compare interrupt
-  #elif SEVEN_SEG_TIMER == 2      
-      TCCR2 |= (1 << CS20) | (1 << CS21); // set prescaler to 64
-      OCR2 = timer_value; // set output compare register value
-      TIMSK |= (1 << OCIE2); // enable timer compare interrupt
-  #endif // SEVEN_SEG_TIMER
-  
-}
-
-void sevenSegInit(SevenSegPin* dataBus, SevenSegPin* comBus, uint8_t digitsNum)
-{       
-    uint8_t i;              
-    gDigitsNum = digitsNum;
-    sevenSegDigit = (uint8_t*)malloc(digitsNum);      
-       
-    _setup_timer(1);
-    
+void sevenSegInit(SevenSeg_pinConfig* dataBus, SevenSeg_pinConfig* comBus, uint8_t digitsNum, SevenSeg_Driver* driver){       
+    sevenSegDigit = (uint8_t*)malloc(digitsNum);                   
+    sevenSegDriver = driver;      
+    gDigitsNum = digitsNum; 
     gDataBus = dataBus;
-    gComBus  =  comBus;
+    gComBus  = comBus;
      
     // Initial dataBus                          
-    for(i = 0; i < 8; i++)
-    {                    
-        dataBus[i].gpio->DDR.reg |= 1 << dataBus[i].pin; 
-        #if SEVEN_SEG_IS_CA != 0
-        dataBus[i].gpio->PORT.reg |= 1 << dataBus[i].pin;
-        #else                                    
-        dataBus[i].gpio->PORT.reg &= ~(1 << dataBus[i].pin);
-        #endif // SEVEN_SEG_IS_CA != 0
-    }  
+    initDataBus(dataBus); 
                       
     // Initial AddressBus
-    for(i = 0; i < digitsNum; i++)
-    {                     
-        comBus[i].gpio->DDR.reg |= 1 << dataBus[i].pin;
-        #if SEVEN_SEG_IS_CA != 0
-        comBus[i].gpio->PORT.reg &= ~(1 << comBus[i].pin);
-        #else                                    
-        comBus[i].gpio->PORT.reg |= 1 << comBus[i].pin;
-        #endif // SEVEN_SEG_IS_CA != 0
-    }
+    initComBus(comBus, digitsNum);
 }
 
-void sevenSegPutInt(uint32_t num)
-{
+void sevenSegPutInt(uint32_t num){
     /*char* temp = malloc(gDigitsNum + 1);
     itoa(num, temp);
     sevenSegPuts(temp);
@@ -117,8 +65,7 @@ void sevenSegPutInt(uint32_t num)
     }
 }
 
-void sevenSegPuts(char* str)
-{
+void sevenSegPuts(char* str){
     uint8_t i;
     for(i = 0; i < gDigitsNum; i++)
     {             
@@ -128,15 +75,14 @@ void sevenSegPuts(char* str)
     }
 }
 
-void sevenSegPutFloat(float num, uint8_t decimals)
-{
+void sevenSegPutFloat(float num, uint8_t decimals){
     /*char* temp = malloc(gDigitsNum + 1);
     ftoa(num, decimals, temp);
     sevenSegPuts(temp);
     free(temp);*/          
            
     // TODO: save integer when decimals is too large      
-    uint32_t temp = num * _intPow(10, decimals);
+    uint32_t temp = num * intPow(10, decimals);
     uint8_t i;       
     for(i = 0; i < gDigitsNum; i++)
     {                                       
@@ -152,8 +98,7 @@ void sevenSegPutFloat(float num, uint8_t decimals)
     #endif //SEVEN_SEG_IS_CA          
 }
 
-void sevenSegRefreshIsr(void)                                      
-{
+void sevenSegRefreshIsr(void){
     uint8_t i;
     static uint8_t digitSelect = 0;   
         
@@ -161,20 +106,13 @@ void sevenSegRefreshIsr(void)
     for(i = 0; i < 8; i++)
     {                        
         uint8_t needSet = (sevenSegDigit[digitSelect] & (1 << i)) != 0; 
-        if(needSet)
-        { 
-            gDataBus[i].gpio->PORT.reg |= needSet << i;  
-        }
-        else
-        {  
-            gDataBus[i].gpio->PORT.reg &= ~(1 << i);
-        }     
+        sevenSegDriver->writePin(&gDataBus[i], needSet ? GPIO_PIN_SET : GPIO_PIN_RESET);           
     }  
     
     #if SEVEN_SEG_IS_CA != 0
-    gComBus[digitSelect].gpio->PORT.reg |= (1 << gComBus[digitSelect].pin);
+    sevenSegDriver->writePin(&gComBus[digitSelect], GPIO_PIN_SET); 
     #else                                    
-    gComBus[digitSelect].gpio->PORT.reg &= ~(1 << gComBus[digitSelect].pin);
+    sevenSegDriver->writePin(&gComBus[digitSelect], GPIO_PIN_RESET); 
     #endif // SEVEN_SEG_IS_CA != 0     
                           
     if(++digitSelect >= gDigitsNum)
@@ -183,21 +121,38 @@ void sevenSegRefreshIsr(void)
     } 
 }
 
-#if SEVEN_SEG_TIMER == 0
-interrupt [TIM0_COMP] void timer0_ovf_isr(void)
-{
-    sevenSegRefreshIsr();
+static uint32_t intPow(uint32_t x, uint32_t y){   
+    uint32_t ret = 1;
+    while(y-- > 0)
+    {
+        ret *= x;        
+    }       
+    return ret;         
 }
-#elif SEVEN_SEG_TIMER == 1
-interrupt [TIM1_COMP] void timer1_ovf_isr(void)
-{    
-    sevenSegRefreshIsr();
-    
-}
-#elif SEVEN_SEG_TIMER == 2
-interrupt [TIM2_COMP] void timer2_ovf_isr(void)
-{
-    sevenSegRefreshIsr();
-}
-#endif //SEVEN_SEG_TIMER  
 
+static void initDataBus (SevenSeg_pinConfig* dataBus){
+    uint8_t len = 8;
+    while(len-- > 0)
+    {                    
+        sevenSegDriver->initPin(dataBus);
+        #if SEVEN_SEG_IS_CA != 0
+        sevenSegDriver->writePin(dataBus, GPIO_PIN_RESET); 
+        #else                                    
+        sevenSegDriver->writePin(dataBus, GPIO_PIN_RESET); 
+        #endif // SEVEN_SEG_IS_CA != 0   
+        dataBus++; 
+    } 
+}
+
+static void initComBus (SevenSeg_pinConfig* comBus, uint8_t len){
+    while(len-- > 0)
+    {                     
+        sevenSegDriver->initPin(comBus); 
+        #if SEVEN_SEG_IS_CA != 0
+        sevenSegDriver->writePin(comBus, GPIO_PIN_RESET); 
+        #else                                    
+        sevenSegDriver->writePin(comBus, GPIO_PIN_SET); 
+        #endif // SEVEN_SEG_IS_CA != 0  
+        comBus++;
+    }
+}

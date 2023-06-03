@@ -48,12 +48,21 @@ typedef struct {
 } SevenSeg_Driver;
 
 
+typedef struct {
+    SevenSeg_pinConfig* dataBus;
+    SevenSeg_pinConfig* comBus;
+    uint8_t* digit;
+    uint8_t digitNum;
+    uint8_t currentDigit;
+}SevenSegment;
+
 #pragma used+    
 
-void sevenSegInit(SevenSeg_pinConfig* dataBus, SevenSeg_pinConfig* comBus, uint8_t digitsNum, SevenSeg_Driver* driver);
-void sevenSegPutInt(uint32_t num);
-void sevenSegPuts(char* str);
-void sevenSegPutFloat(float num, uint8_t decimals);
+void sevenSegInit(SevenSeg_Driver* driver);
+void sevenSegAdd(SevenSegment* sg, SevenSeg_pinConfig* dataBus, SevenSeg_pinConfig* comBus, uint8_t digitsNum);
+void sevenSegPutInt(SevenSegment* sg, uint32_t num);
+void sevenSegPuts(SevenSegment* sg, char* str);
+void sevenSegPutFloat(SevenSegment* sg, float num, uint8_t decimals);
 void sevenSegRefreshIsr(void);
 
 #pragma used-

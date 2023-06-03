@@ -11,39 +11,37 @@
 #include "seven_seg.h"
 #include "seven_seg_ascii.h"
 
-static const SevenSeg_Driver* sevenSegDriver;
+typedef struct {
+    SevenSegment* sevenSegs[SEVEN_SEG_MAX_NUM];
+    uint8_t len;
+}SevenSegHandler;
 
-static SevenSeg_pinConfig* gDataBus;
-static SevenSeg_pinConfig* gComBus;
-static uint8_t gDigitsNum;
-static uint8_t* sevenSegDigit;
+static const SevenSeg_Driver* sevenSegDriver;
+static SevenSegHandler handler;
 
 static void initDataBus (SevenSeg_pinConfig* dataBus);
 static void initComBus (SevenSeg_pinConfig* comBus, uint8_t len);
 static uint32_t intPow(uint32_t x, uint32_t y);
+static void resetComBus (SevenSegment* sg);
 
-void _resetComBus (void){
-    SevenSeg_pinConfig* comBus = gComBus;
-    uint8_t len = gDigitsNum;
-
-    while(len-- > 0)
-    {          
-        #if SEVEN_SEG_IS_CA
-        sevenSegDriver->writePin(comBus, GPIO_PIN_RESET);   
-        #else                                    
-        sevenSegDriver->writePin(comBus, GPIO_PIN_SET);
-        #endif // SEVEN_SEG_IS_CA     
-        comBus++;                
-    }
-}
-
-void sevenSegInit(SevenSeg_pinConfig* dataBus, SevenSeg_pinConfig* comBus, uint8_t digitsNum, SevenSeg_Driver* driver){       
-    sevenSegDigit = (uint8_t*)malloc(digitsNum);                   
-    sevenSegDriver = driver;      
-    gDigitsNum = digitsNum; 
-    gDataBus = dataBus;
-    gComBus  = comBus;
-     
+void sevenSegAdd(SevenSegment* sg, SevenSeg_pinConfig* dataBus, SevenSeg_pinConfig* comBus, uint8_t digitsNum){
+    if(sg == NULL || handler.len >= SEVEN_SEG_MAX_NUM)
+    {  
+        return;
+    }  
+    
+    sg->dataBus = dataBus;
+    sg->comBus = comBus;
+    sg->digitNum = digitsNum;  
+    sg->digit = (uint8_t*)malloc(digitsNum); 
+    sg->currentDigit = 0;
+                                             
+    /*handler.len++;
+    handler.sevenSegs = (SevenSegment**)realloc(handler.sevenSegs, sizeof(SevenSegment**) * handler.len);
+    handler.sevenSegs[handler.len - 1] = sg;*/
+    
+    handler.sevenSegs[handler.len++] = sg;
+    
     // Initial dataBus                          
     initDataBus(dataBus); 
                       
@@ -51,73 +49,103 @@ void sevenSegInit(SevenSeg_pinConfig* dataBus, SevenSeg_pinConfig* comBus, uint8
     initComBus(comBus, digitsNum);
 }
 
-void sevenSegPutInt(uint32_t num){
-    /*char* temp = malloc(gDigitsNum + 1);
+void sevenSegInit(SevenSeg_Driver* driver){
+    sevenSegDriver = driver;    
+}
+
+void sevenSegPutInt(SevenSegment* sg, uint32_t num){
+    uint8_t i;
+    if(sg == NULL)
+    {  
+        return;
+    }       
+    
+    /*char* temp = malloc(sg->digitNum + 1);
     itoa(num, temp);
     sevenSegPuts(temp);
     free(temp);*/  
 
-    uint8_t i;
-    for(i = 0; i < gDigitsNum; i++)
+    for(i = 0; i < sg->digitNum; i++)
     {                      
-        sevenSegDigit[i] = sevenSegNum[num % 10];
+        sg->digit[i] = sevenSegNum[num % 10];
         num /= 10;
     }
 }
 
-void sevenSegPuts(char* str){
-    uint8_t i;
-    for(i = 0; i < gDigitsNum; i++)
+void sevenSegPuts(SevenSegment* sg, char* str){
+    uint8_t len = sg->digitNum;
+    uint8_t* probe = sg->digit + sg->digitNum - 1;
+    
+    if(sg == NULL)
+    {  
+        return;
+    }
+    
+    while(len-- > 0)
     {             
-        sevenSegDigit[gDigitsNum - i - 1] = (*str != '\0') ? 
-            SevenSegmentASCII[*str++ - 0x20] :
+        *probe-- = (*str != '\0') ? 
+            SevenSegmentASCII[*str - 0x20] :
             SevenSegmentASCII[0];
+        str++;
     }
 }
 
-void sevenSegPutFloat(float num, uint8_t decimals){
-    /*char* temp = malloc(gDigitsNum + 1);
+void sevenSegPutFloat(SevenSegment* sg, float num, uint8_t decimals){
+    uint32_t temp = num * intPow(10, decimals);
+    uint8_t len = sg->digitNum;
+    uint8_t* probe = sg->digit;
+    
+    if(sg == NULL)
+    {  
+        return;
+    }
+    
+    /*char* temp = malloc(sg->digitNum + 1);
     ftoa(num, decimals, temp);
     sevenSegPuts(temp);
     free(temp);*/          
-           
-    // TODO: save integer when decimals is too large      
-    uint32_t temp = num * intPow(10, decimals);
-    uint8_t i;       
-    for(i = 0; i < gDigitsNum; i++)
+         
+    while(len-- > 0)
     {                                       
-        sevenSegDigit[i] = sevenSegNum[temp % 10];
+        *probe++ = sevenSegNum[temp % 10];
         temp /= 10;   
     }       
               
     // Set DP
     #if SEVEN_SEG_IS_CA     
-    sevenSegDigit[decimals] &= ~0x80;     
+    sg->digit[decimals] &= ~0x80;     
     #else                     
-    sevenSegDigit[decimals] |= 0x80;            
+    sg->digit[decimals] |= 0x80;            
     #endif //SEVEN_SEG_IS_CA          
 }
 
 void sevenSegRefreshIsr(void){
-    uint8_t i;
-    static uint8_t digitSelect = 0;   
+
+    uint8_t i;     
+    uint8_t seg;
+                    
+    for(seg = 0; seg < handler.len; seg++)
+    {                    
+        uint8_t currentDigit = handler.sevenSegs[seg]->currentDigit;  
+                    
+        resetComBus(handler.sevenSegs[seg]); 
+        for(i = 0; i < 8; i++)
+        {                        
+            uint8_t needSet = (handler.sevenSegs[seg]->digit[currentDigit] & (1 << i)) != 0; 
+            sevenSegDriver->writePin(&handler.sevenSegs[seg]->dataBus[i], needSet ? GPIO_PIN_SET : GPIO_PIN_RESET);           
+        }  
         
-    _resetComBus(); 
-    for(i = 0; i < 8; i++)
-    {                        
-        uint8_t needSet = (sevenSegDigit[digitSelect] & (1 << i)) != 0; 
-        sevenSegDriver->writePin(&gDataBus[i], needSet ? GPIO_PIN_SET : GPIO_PIN_RESET);           
-    }  
-    
-    #if SEVEN_SEG_IS_CA != 0
-    sevenSegDriver->writePin(&gComBus[digitSelect], GPIO_PIN_SET); 
-    #else                                    
-    sevenSegDriver->writePin(&gComBus[digitSelect], GPIO_PIN_RESET); 
-    #endif // SEVEN_SEG_IS_CA != 0     
-                          
-    if(++digitSelect >= gDigitsNum)
-    {
-        digitSelect = 0;
+        #if SEVEN_SEG_IS_CA != 0
+        sevenSegDriver->writePin(&handler.sevenSegs[seg]->comBus[currentDigit], GPIO_PIN_SET); 
+        #else                                    
+        sevenSegDriver->writePin(&handler.sevenSegs[seg]->comBus[currentDigit], GPIO_PIN_RESET); 
+        #endif // SEVEN_SEG_IS_CA != 0 
+            
+        handler.sevenSegs[seg]->currentDigit++;                      
+        if(currentDigit >= handler.sevenSegs[seg]->digitNum - 1)
+        {
+            handler.sevenSegs[seg]->currentDigit = 0;
+        } 
     } 
 }
 
@@ -154,5 +182,20 @@ static void initComBus (SevenSeg_pinConfig* comBus, uint8_t len){
         sevenSegDriver->writePin(comBus, GPIO_PIN_SET); 
         #endif // SEVEN_SEG_IS_CA != 0  
         comBus++;
+    }
+}
+
+static void resetComBus (SevenSegment* sg){
+    SevenSeg_pinConfig* comBus = sg->comBus;
+    uint8_t len = sg->digitNum;
+
+    while(len-- > 0)
+    {          
+        #if SEVEN_SEG_IS_CA
+        sevenSegDriver->writePin(comBus, GPIO_PIN_RESET);   
+        #else                                    
+        sevenSegDriver->writePin(comBus, GPIO_PIN_SET);
+        #endif // SEVEN_SEG_IS_CA     
+        comBus++;                
     }
 }

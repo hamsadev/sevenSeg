@@ -12,7 +12,16 @@
  * @brief set your hardware from HardwareType enum
  */
 #define SEVEN_SEG_HW   SEVEN_SEG_HW_AVR  
-      
-#define SEVEN_SEG_IS_CA         1   
+  
+/**
+ * @brief Set 1 if seven seg is CA
+ */    
+#define SEVEN_SEG_IS_CA         1
+
+/**
+ * @brief maximum number of seven segment
+ * *Note that this number is seven segment, not digits
+ */
+#define SEVEN_SEG_MAX_NUM       3   
 
 #endif //_SEVEN_SEG_CONFIG_H_

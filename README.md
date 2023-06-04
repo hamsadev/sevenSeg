@@ -13,6 +13,14 @@ A library for setting up 7 segments as a multiplexer for all types of microcontr
 # Demo
 ![](https://github.com/hamsaco/sevenSeg/blob/master/header.gif)
 
+# Tests
+ - [x] AVR (atmega16)
+ - [ ] stm32F1
+ - [ ] stm32F3
+ - [ ] stm32F4
+ - [ ] stm32F7
+
+
 ## How to use
 
  - First, add the library to your project

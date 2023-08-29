@@ -43,6 +43,9 @@
     <Compile Include="..\..\seven_seg.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="..\..\seven_seg_port.c">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\vs\\CV.targets" />
 </Project>

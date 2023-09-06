@@ -12,7 +12,11 @@
 #include "seven_seg_ascii.h"
 
 typedef struct {
+#if USE_DYNAMIC_MEMORY
+    SevenSegment** sevenSegs;
+#else
     SevenSegment* sevenSegs[SEVEN_SEG_MAX_NUM];
+#endif //USE_DYNAMIC_MEMORY    
     uint8_t len;
 }SevenSegHandler;
 
@@ -25,22 +29,25 @@ static uint32_t intPow(uint32_t x, uint32_t y);
 static void resetComBus (SevenSegment* sg);
 
 void sevenSegAdd(SevenSegment* sg, SevenSeg_pinConfig* dataBus, SevenSeg_pinConfig* comBus, uint8_t digitsNum){
+#if !USE_DYNAMIC_MEMORY
     if(sg == NULL || handler.len >= SEVEN_SEG_MAX_NUM)
     {  
         return;
-    }  
+    }                 
+#endif //!USE_DYNAMIC_MEMORY
     
     sg->dataBus = dataBus;
     sg->comBus = comBus;
     sg->digitNum = digitsNum;  
-    sg->digit = (uint8_t*)malloc(digitsNum); 
     sg->currentDigit = 0;
-                                             
-    /*handler.len++;
-    handler.sevenSegs = (SevenSegment**)realloc(handler.sevenSegs, sizeof(SevenSegment**) * handler.len);
-    handler.sevenSegs[handler.len - 1] = sg;*/
-    
-    handler.sevenSegs[handler.len++] = sg;
+#if USE_DYNAMIC_MEMORY
+    sg->digit = (uint8_t*)malloc(digitsNum);  
+    handler.sevenSegs = handler.sevenSegs ? 
+        realloc(handler.sevenSegs, sizeof(SevenSegment*) * (handler.len + 1) ) :
+        malloc(sizeof(SevenSegment*));
+#endif //USE_DYNAMIC_MEMORY                                                 
+
+    handler.sevenSegs[handler.len++] = sg;    
     
     // Initial dataBus                          
     initDataBus(dataBus); 
@@ -51,6 +58,8 @@ void sevenSegAdd(SevenSegment* sg, SevenSeg_pinConfig* dataBus, SevenSeg_pinConf
 
 void sevenSegInit(SevenSeg_Driver* driver){
     sevenSegDriver = driver;    
+    handler.len = 0;
+    handler.sevenSegs = NULL;
 }
 
 void sevenSegPutInt(SevenSegment* sg, uint32_t num){

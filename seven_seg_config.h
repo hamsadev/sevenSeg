@@ -1,6 +1,8 @@
 #ifndef _SEVEN_SEG_CONFIG_H_
 #define _SEVEN_SEG_CONFIG_H_
 
+#include <stdbool.h>
+
 #define SEVEN_SEG_HW_AVR        1
 #define SEVEN_SEG_HW_STM32F0    2
 #define SEVEN_SEG_HW_STM32F1    3
@@ -16,12 +18,24 @@
 /**
  * @brief Set 1 if seven seg is CA
  */    
-#define SEVEN_SEG_IS_CA         1
+#define SEVEN_SEG_IS_CA         true
 
 /**
- * @brief maximum number of seven segment
- * *Note that this number is seven segment, not digits
+ * @brief Use dynamic memory for seven seg buffer
+ * 
  */
-#define SEVEN_SEG_MAX_NUM       3   
+#define USE_DYNAMIC_MEMORY      false
+
+#if !USE_DYNAMIC_MEMORY
+/**
+ * @brief maximum number of seven segment's digits
+ * 
+*/
+#define SEVEN_SEG_DIGIT_MAX_NUM     8
+/**
+ * @brief maximum number of seven segment
+ */
+#define SEVEN_SEG_MAX_NUM       3
+#endif
 
 #endif //_SEVEN_SEG_CONFIG_H_

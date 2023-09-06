@@ -51,7 +51,12 @@ typedef struct {
 typedef struct {
     SevenSeg_pinConfig* dataBus;
     SevenSeg_pinConfig* comBus;
+#if USE_DYNAMIC_MEMORY
     uint8_t* digit;
+#else
+    uint8_t digit[SEVEN_SEG_DIGIT_MAX_NUM];
+#endif //USE_DYNAMIC_MEMORY
+    
     uint8_t digitNum;
     uint8_t currentDigit;
 }SevenSegment;

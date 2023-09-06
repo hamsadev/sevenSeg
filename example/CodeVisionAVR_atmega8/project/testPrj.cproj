@@ -4,8 +4,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>6.1</ProjectVersion>
     <ToolchainName>com.HPInfoTech.CodeVisionAVR.C</ToolchainName>
-    <ProjectGuid>{3763964B-423D-497C-A76A-A46C3F34E8A0}</ProjectGuid>
-    <avrdevice>ATmega16</avrdevice>
+    <ProjectGuid>{54A4A51C-423D-497C-A76A-A46C3F34E8A0}</ProjectGuid>
+    <avrdevice>ATmega8</avrdevice>
     <avrdeviceseries>none</avrdeviceseries>
     <OutputType>Executable</OutputType>
     <Language>C</Language>
@@ -39,11 +39,11 @@
     <Compile Include="main.c">
       <SubType>compile</SubType>
     </Compile>
-    <Folder Include="..\..\" />
-    <Compile Include="..\..\seven_seg.c">
+    <Folder Include="..\..\..\" />
+    <Compile Include="..\..\..\seven_seg.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="..\..\seven_seg_port.c">
+    <Compile Include="..\..\..\seven_seg_port.c">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

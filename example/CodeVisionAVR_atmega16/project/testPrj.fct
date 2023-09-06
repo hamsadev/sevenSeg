@@ -1,0 +1,6 @@
+main DSTACK_USAGE:0 DSTACK_LEVEL:0 FILE:"main.c" LINE:59
+sevenSegPutFloat DSTACK_USAGE:15 DSTACK_LEVEL:15 FILE:"..\..\..\seven_seg.c" LINE:93
+intPow DSTACK_USAGE:12 DSTACK_LEVEL:27 FILE:"..\..\..\seven_seg.c" LINE:152
+timer0_ovf_isr DSTACK_USAGE:12 DSTACK_LEVEL:39 FILE:"main.c" LINE:109
+sevenSegRefreshIsr DSTACK_USAGE:4 DSTACK_LEVEL:43 FILE:"..\..\..\seven_seg.c" LINE:122
+resetComBus DSTACK_USAGE:6 DSTACK_LEVEL:49 FILE:"..\..\..\seven_seg.c" LINE:188

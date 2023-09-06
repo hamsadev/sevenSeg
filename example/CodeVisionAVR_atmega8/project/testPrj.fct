@@ -1,0 +1,7 @@
+main DSTACK_USAGE:0 DSTACK_LEVEL:0 FILE:"main.c" LINE:42
+sevenSegAdd DSTACK_USAGE:7 DSTACK_LEVEL:7 FILE:"..\..\..\seven_seg.c" LINE:31
+realloc DSTACK_USAGE:12 DSTACK_LEVEL:19 FILE:"C:\cvavr\lib\stdlib.lib" LINE:1212
+allocate_block DSTACK_USAGE:10 DSTACK_LEVEL:29 FILE:"C:\cvavr\lib\stdlib.lib" LINE:1173
+timer0_ovf_isr DSTACK_USAGE:12 DSTACK_LEVEL:41 FILE:"main.c" LINE:83
+sevenSegRefreshIsr DSTACK_USAGE:4 DSTACK_LEVEL:45 FILE:"..\..\..\seven_seg.c" LINE:131
+resetComBus DSTACK_USAGE:6 DSTACK_LEVEL:51 FILE:"..\..\..\seven_seg.c" LINE:197

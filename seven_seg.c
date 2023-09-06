@@ -58,8 +58,10 @@ void sevenSegAdd(SevenSegment* sg, SevenSeg_pinConfig* dataBus, SevenSeg_pinConf
 
 void sevenSegInit(SevenSeg_Driver* driver){
     sevenSegDriver = driver;    
-    handler.len = 0;
+    handler.len = 0;         
+#if USE_DYNAMIC_MEMORY
     handler.sevenSegs = NULL;
+#endif //USE_DYNAMIC_MEMORY
 }
 
 void sevenSegPutInt(SevenSegment* sg, uint32_t num){
